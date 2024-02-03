@@ -27,7 +27,7 @@ env:
   REPO_URL: https://github.com/hanwckf/immortalwrt-mt798x
   REPO_BRANCH: openwrt-21.02
   FEEDS_CONF: feeds.conf.default
-  CONFIG_FILE: mt7981.config
+  CONFIG_FILE: asr3000.config
   DIY_P1_SH: diy-part1.sh
   DIY_P2_SH: diy-part2.sh
   UPLOAD_BIN_DIR: false
@@ -112,7 +112,8 @@ jobs:
         echo -e "$(nproc) thread compile"
         make -j$(nproc) || make -j1 V=s
         echo "status=success" >> $GITHUB_OUTPUT
-        echo "DEVICE_NAME=_mt7981" >> $GITHUB_ENV
+        grep '^CONFIG_TARGET.*DEVICE.*=y' .config | sed -r 's/.*DEVICE_(.*)=y/\1/' > DEVICE_NAME
+        [ -s DEVICE_NAME ] && echo "DEVICE_NAME=_$(cat DEVICE_NAME)" >> $GITHUB_ENV
         echo "FILE_DATE=_$(date +"%Y%m%d%H%M")" >> $GITHUB_ENV
 
     - name: Check space usage
@@ -148,14 +149,13 @@ jobs:
       run: |
         echo "release_tag=$(date +"%Y.%m.%d-%H%M")" >> $GITHUB_OUTPUT
         touch release.txt
-        echo "## hanwckf's ImmortalWrt mt7981 Release $(date +"%Y.%m.%d-%H:%M")" >> release.txt
+        echo "## hanwckf's ImmortalWrt ASR3000 Release $(date +"%Y.%m.%d-%H:%M")" >> release.txt
+        echo "- factory.bin" >> release.txt
+        echo "  md5: $(md5sum ${{ env.FIRMWARE }}/*factory.bin | cut -d" " -f1)" >> release.txt
+        echo "  sha256: $(grep ".*factory.bin" ${{ env.FIRMWARE }}/sha256sums | grep -oE "\w{64}")" >> release.txt
         echo "- squashfs-sysupgrade.bin" >> release.txt
-        echo "  360T7-md5: $(md5sum ${{ env.FIRMWARE }}/*360-t7*sysupgrade.bin | cut -d" " -f1)" >> release.txt
-        echo "  360T7-sha256: $(grep ".*360-t7.*sysupgrade.bin" ${{ env.FIRMWARE }}/sha256sums | grep -oE "\w{64}")" >> release.txt
-        echo "  WR30U-112m-md5: $(md5sum ${{ env.FIRMWARE }}/*112m*sysupgrade.bin | cut -d" " -f1)" >> release.txt
-        echo "  WR30U-112m-sha256: $(grep ".*112m.*sysupgrade.bin" ${{ env.FIRMWARE }}/sha256sums | grep -oE "\w{64}")" >> release.txt
-        echo "  WR30U-stock-md5: $(md5sum ${{ env.FIRMWARE }}/*stock*sysupgrade.bin | cut -d" " -f1)" >> release.txt
-        echo "  WR30U-stock-sha256: $(grep ".*stock.*sysupgrade.bin" ${{ env.FIRMWARE }}/sha256sums | grep -oE "\w{64}")" >> release.txt
+        echo "  md5: $(md5sum ${{ env.FIRMWARE }}/*sysupgrade.bin | cut -d" " -f1)" >> release.txt
+        echo "  sha256: $(grep ".*sysupgrade.bin" ${{ env.FIRMWARE }}/sha256sums | grep -oE "\w{64}")" >> release.txt
         echo "status=success" >> $GITHUB_OUTPUT
 
     - name: Upload firmware to release
@@ -167,6 +167,7 @@ jobs:
         tag_name: ${{ steps.tag.outputs.release_tag }}
         body_path: release.txt
         files: |
+          ${{ env.FIRMWARE }}/*factory.bin
           ${{ env.FIRMWARE }}/*sysupgrade.bin
           ImmortalWrt/.config
 
