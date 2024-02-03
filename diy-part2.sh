@@ -40,7 +40,7 @@ cp -rv helloworld/luci-app-ssr-plus feeds/luci/applications
 cp -rv helloworld/shadow-tls package
 rm -rfv helloworld
 
-sed -i 's/192.168.1.1/192.168.5.1/g' package/base-files/files/bin/config_generate
+sed -i 's/192.168.1.1/192.168.6.1/g' package/base-files/files/bin/config_generate
 
 # Remove upx commands
 #makefile_file="$({ find package|grep Makefile |sed "/Makefile./d"; } 2>"/dev/null")"
